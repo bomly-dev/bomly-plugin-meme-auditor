@@ -39,7 +39,7 @@ func (a *auditor) Metadata(context.Context) (*sdk.PluginMetadata, error) {
 		Kind:             sdk.PluginKindAuditor,
 		PluginAPIVersion: sdk.PluginAPIVersion,
 		Description:      "Example auditor plugin that emits warning findings for meme dependency names.",
-		Homepage:         "https://github.com/bomly-dev/bomly-plugin-meme-dependency-auditor",
+		Homepage:         "https://github.com/bomly-dev/bomly-plugin-meme-auditor",
 		License:          "Apache-2.0",
 	}, nil
 }
