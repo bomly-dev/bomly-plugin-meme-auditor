@@ -2,7 +2,7 @@
   "schemaVersion": "bomly.plugin.package.v1",
   "id": "bomly.examples.auditor.meme-deps",
   "name": "Meme Dependency Auditor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "kind": "auditor",
   "runtime": "hashicorp-grpc",
   "pluginApiVersion": "bomly.plugin.v1",
@@ -17,7 +17,7 @@
     "enabled": false,
     "origin": "external"
   },
-  "source": "github:bomly-dev/bomly-plugin-meme-auditor@v0.1.0",
+  "source": "github:bomly-dev/bomly-plugin-meme-auditor@v0.1.1",
   "homepage": "https://github.com/bomly-dev/bomly-plugin-meme-auditor",
   "license": "Apache-2.0",
   "description": "Example auditor plugin that emits warning findings for meme dependency names."
