@@ -1,6 +1,6 @@
 .PHONY: build test package
 
-BINARY ?= bomly-plugin-meme-dependency-auditor
+BINARY ?= bomly-plugin-meme-auditor
 
 build:
 	go build -o bin/$(BINARY) .

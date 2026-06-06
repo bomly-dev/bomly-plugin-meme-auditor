@@ -6,13 +6,13 @@ Example Bomly auditor plugin that emits reference-style warning findings for pac
 
 ```bash
 go test ./...
-go build -o bin/bomly-plugin-meme-dependency-auditor .
+go build -o bin/bomly-plugin-meme-auditor .
 ```
 
 ## Install for local development
 
 ```bash
-bomly plugin install ./bin/bomly-plugin-meme-dependency-auditor --dev
+bomly plugin install ./bin/bomly-plugin-meme-auditor --dev
 bomly plugin enable bomly.examples.auditor.meme-deps
 bomly scan --path . --auditors +bomly.examples.auditor.meme-deps
 ```
@@ -20,14 +20,14 @@ bomly scan --path . --auditors +bomly.examples.auditor.meme-deps
 ## Install from an archive
 
 ```bash
-bomly plugin install ./dist/bomly-plugin-meme-dependency-auditor_linux_amd64.tar.gz
+bomly plugin install ./dist/bomly-plugin-meme-auditor_linux_amd64.tar.gz
 bomly plugin enable bomly.examples.auditor.meme-deps
 ```
 
 Direct URL installs must include a checksum unless you explicitly opt out:
 
 ```bash
-bomly plugin install https://example.internal/bomly-plugin-meme-dependency-auditor_linux_amd64.tar.gz \
+bomly plugin install https://example.internal/bomly-plugin-meme-auditor_linux_amd64.tar.gz \
   --checksum sha256:<digest>
 ```
 
@@ -35,7 +35,7 @@ bomly plugin install https://example.internal/bomly-plugin-meme-dependency-audit
 
 ```bash
 export BOMLY_GITHUB_TOKEN=<token-with-release-access>
-bomly plugin install github:bomly-dev/bomly-plugin-meme-dependency-auditor@v0.1.0
+bomly plugin install github:bomly-dev/bomly-plugin-meme-auditor@v0.1.0
 bomly plugin enable bomly.examples.auditor.meme-deps
 ```
 

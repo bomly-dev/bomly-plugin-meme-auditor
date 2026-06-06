@@ -1,4 +1,4 @@
-module github.com/bomly-dev/bomly-plugin-meme-dependency-auditor
+module github.com/bomly-dev/bomly-plugin-meme-auditor
 
 go 1.26.3
 

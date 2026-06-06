@@ -8,17 +8,17 @@
   "pluginApiVersion": "bomly.plugin.v1",
   "bomlyVersion": ">=0.1.0",
   "entrypoint": {
-    "linux/amd64": "bin/bomly-plugin-meme-dependency-auditor",
-    "darwin/arm64": "bin/bomly-plugin-meme-dependency-auditor",
-    "windows/amd64": "bin/bomly-plugin-meme-dependency-auditor.exe"
+    "linux/amd64": "bin/bomly-plugin-meme-auditor",
+    "darwin/arm64": "bin/bomly-plugin-meme-auditor",
+    "windows/amd64": "bin/bomly-plugin-meme-auditor.exe"
   },
   "auditorDescriptor": {
     "name": "bomly.examples.auditor.meme-deps",
     "enabled": false,
     "origin": "external"
   },
-  "source": "github:bomly-dev/bomly-plugin-meme-dependency-auditor@v0.1.0",
-  "homepage": "https://github.com/bomly-dev/bomly-plugin-meme-dependency-auditor",
+  "source": "github:bomly-dev/bomly-plugin-meme-auditor@v0.1.0",
+  "homepage": "https://github.com/bomly-dev/bomly-plugin-meme-auditor",
   "license": "Apache-2.0",
   "description": "Example auditor plugin that emits warning findings for meme dependency names."
 }
