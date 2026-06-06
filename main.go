@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	auditorName   = "bomly.examples.auditor.meme-deps"
-	pluginVersion = "0.1.0"
+	auditorName = "bomly.examples.auditor.meme-deps"
 )
 
 type auditor struct{}
@@ -34,18 +33,13 @@ var defaultMemePackages = map[string]string{
 func (a *auditor) Metadata(context.Context) (*sdk.PluginMetadata, error) {
 	return &sdk.PluginMetadata{
 		ID:               auditorName,
-		Name:             "Meme Dependency Auditor",
-		Version:          pluginVersion,
 		Kind:             sdk.PluginKindAuditor,
 		PluginAPIVersion: sdk.PluginAPIVersion,
-		Description:      "Example auditor plugin that emits warning findings for meme dependency names.",
-		Homepage:         "https://github.com/bomly-dev/bomly-plugin-meme-auditor",
-		License:          "Apache-2.0",
 	}, nil
 }
 
 func (a *auditor) Descriptor(context.Context) (*sdk.AuditorDescriptor, error) {
-	return &sdk.AuditorDescriptor{Name: auditorName, Enabled: false, Origin: sdk.ExternalOrigin}, nil
+	return &sdk.AuditorDescriptor{Name: auditorName}, nil
 }
 
 func (a *auditor) Ready(context.Context, *sdk.AuditRequest) (*sdk.ReadyResponse, error) {
