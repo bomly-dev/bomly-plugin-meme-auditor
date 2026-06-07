@@ -1,6 +1,6 @@
 {
   "schemaVersion": "bomly.plugin.package.v1",
-  "id": "bomly.examples.auditor.meme-deps",
+  "id": "bomly.meme.auditor",
   "name": "Meme Dependency Auditor",
   "version": "0.1.2",
   "kind": "auditor",

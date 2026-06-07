@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/bomly-dev/bomly-cli/sdk"
@@ -31,5 +32,11 @@ func TestAuditFlagsMemeDependency(t *testing.T) {
 	}
 	if finding.PackageRef != "pkg:npm/left-pad@1.3.0" {
 		t.Fatalf("unexpected package ref %q", finding.PackageRef)
+	}
+	if len(finding.ID) != 36 {
+		t.Fatalf("expected UUID finding id, got %q", finding.ID)
+	}
+	if strings.Count(finding.ID, "-") != 4 {
+		t.Fatalf("expected UUID finding id, got %q", finding.ID)
 	}
 }

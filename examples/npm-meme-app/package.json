@@ -1,0 +1,12 @@
+{
+  "name": "npm-meme-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal fixture for the Bomly meme dependency auditor.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "colors": "1.4.0",
+    "is-odd": "3.0.1",
+    "left-pad": "1.3.0"
+  }
+}

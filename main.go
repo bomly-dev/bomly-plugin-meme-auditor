@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/bomly-dev/bomly-cli/sdk"
+	"github.com/google/uuid"
 )
 
 const (
-	auditorName = "bomly.examples.auditor.meme-deps"
+	auditorName = "bomly.meme.auditor"
 )
 
 type auditor struct{}
@@ -34,7 +34,7 @@ func (a *auditor) Descriptor(context.Context) (*sdk.AuditorDescriptor, error) {
 	return &sdk.AuditorDescriptor{
 		Name:        auditorName,
 		DisplayName: "Meme Dependency Auditor",
-		Aliases:     []string{"meme-deps", "meme"},
+		Aliases:     []string{"meme-auditor", "meme"},
 		Tags:        []string{"policy", "dependency-lore"},
 	}, nil
 }
@@ -117,7 +117,7 @@ func finding(dep *sdk.Dependency, reason string) sdk.Finding {
 	reasons := []string{"meme-dependency", reason}
 	sort.Strings(reasons)
 	return sdk.Finding{
-		ID:             fmt.Sprintf("%s:%s", auditorName, dep.ID),
+		ID:             newFindingID(),
 		Kind:           sdk.FindingKindPackage,
 		Title:          "Dependency has unusually high meme density",
 		Severity:       "low",
@@ -128,6 +128,14 @@ func finding(dep *sdk.Dependency, reason string) sdk.Finding {
 		DependencyRefs: []string{dep.ID},
 		Reasons:        reasons,
 	}
+}
+
+func newFindingID() string {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return auditorName
+	}
+	return id.String()
 }
 
 func main() {
