@@ -30,16 +30,13 @@ var defaultMemePackages = map[string]string{
 	"tiny-invariant": "small enough to summon architecture debate",
 }
 
-func (a *auditor) Metadata(context.Context) (*sdk.PluginMetadata, error) {
-	return &sdk.PluginMetadata{
-		ID:               auditorName,
-		Kind:             sdk.PluginKindAuditor,
-		PluginAPIVersion: sdk.PluginAPIVersion,
-	}, nil
-}
-
 func (a *auditor) Descriptor(context.Context) (*sdk.AuditorDescriptor, error) {
-	return &sdk.AuditorDescriptor{Name: auditorName}, nil
+	return &sdk.AuditorDescriptor{
+		Name:        auditorName,
+		DisplayName: "Meme Dependency Auditor",
+		Aliases:     []string{"meme-deps", "meme"},
+		Tags:        []string{"policy", "dependency-lore"},
+	}, nil
 }
 
 func (a *auditor) Ready(context.Context, *sdk.AuditRequest) (*sdk.ReadyResponse, error) {
