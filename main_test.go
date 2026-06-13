@@ -11,10 +11,12 @@ import (
 func TestAuditFlagsMemeDependency(t *testing.T) {
 	graph := sdk.New()
 	dep := sdk.NewDependency(sdk.Dependency{
-		Name:      "left-pad",
-		Version:   "1.3.0",
-		Ecosystem: string(sdk.EcosystemNPM),
-		PURL:      "pkg:npm/left-pad@1.3.0",
+		Coordinates: sdk.Coordinates{
+			Name:      "left-pad",
+			Version:   "1.3.0",
+			Ecosystem: sdk.EcosystemNPM,
+			PURL:      "pkg:npm/left-pad@1.3.0",
+		},
 	})
 	if err := graph.AddNode(dep); err != nil {
 		t.Fatalf("AddNode() error = %v", err)

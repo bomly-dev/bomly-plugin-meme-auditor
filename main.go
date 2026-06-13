@@ -120,7 +120,7 @@ func finding(dep *sdk.Dependency, reason string) sdk.Finding {
 		ID:             newFindingID(),
 		Kind:           sdk.FindingKindPackage,
 		Title:          "Dependency has unusually high meme density",
-		Severity:       "low",
+		Severity:       sdk.SeverityLow,
 		Source:         auditorName,
 		Auditor:        auditorName,
 		Disposition:    sdk.FindingDispositionWarn,
