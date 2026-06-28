@@ -40,9 +40,8 @@ func (a *auditor) Descriptor(context.Context) (*sdk.AuditorDescriptor, error) {
 }
 
 func (a *auditor) Ready(context.Context, *sdk.AuditRequest) (*sdk.ReadyResponse, error) {
-	_, err := loadConfig()
-	if err != nil {
-		return nil, err
+	if _, err := loadConfig(); err != nil {
+		return &sdk.ReadyResponse{Reason: "invalid meme auditor configuration: " + err.Error()}, nil
 	}
 	return &sdk.ReadyResponse{Ready: true}, nil
 }
