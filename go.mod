@@ -3,7 +3,7 @@ module github.com/bomly-dev/bomly-plugin-meme-auditor
 go 1.26.3
 
 require (
-	github.com/bomly-dev/bomly-cli v0.15.2-0.20260628072403-8ab41bdadc70
+	github.com/bomly-dev/bomly-cli v0.15.2
 	github.com/google/uuid v1.6.0
 )
 
