@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/bomly-dev/bomly-cli/sdk"
+	"github.com/bomly-dev/bomly-sdk"
 	"github.com/google/uuid"
 )
 
@@ -32,10 +32,11 @@ var defaultMemePackages = map[string]string{
 
 func (a *auditor) Descriptor(context.Context) (*sdk.AuditorDescriptor, error) {
 	return &sdk.AuditorDescriptor{
-		Name:        auditorName,
-		DisplayName: "Meme Dependency Auditor",
-		Aliases:     []string{"meme-auditor", "meme"},
-		Tags:        []string{"policy", "dependency-lore"},
+		Name:         auditorName,
+		DisplayName:  "Meme Dependency Auditor",
+		Aliases:      []string{"meme-auditor", "meme"},
+		Tags:         []string{"policy", "dependency-lore"},
+		ConfigSchema: sdk.MustConfigSchemaFor(config{}),
 	}, nil
 }
 
@@ -122,7 +123,7 @@ func finding(dep *sdk.Dependency, reason string) sdk.Finding {
 		Severity:       sdk.SeverityLow,
 		Source:         auditorName,
 		Auditor:        auditorName,
-		Disposition:    sdk.FindingDispositionWarn,
+		PolicyStatus:   sdk.FindingPolicyStatusWarn,
 		PackageRef:     purl,
 		DependencyRefs: []string{dep.ID},
 		Reasons:        reasons,

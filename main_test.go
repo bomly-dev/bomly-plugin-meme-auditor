@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bomly-dev/bomly-cli/sdk"
+	"github.com/bomly-dev/bomly-sdk"
 )
 
 func TestAuditFlagsMemeDependency(t *testing.T) {
@@ -29,7 +29,7 @@ func TestAuditFlagsMemeDependency(t *testing.T) {
 		t.Fatalf("expected one finding, got %#v", resp.Findings)
 	}
 	finding := resp.Findings[0]
-	if finding.Kind != sdk.FindingKindPackage || finding.Disposition != sdk.FindingDispositionWarn {
+	if finding.Kind != sdk.FindingKindPackage || finding.PolicyStatus != sdk.FindingPolicyStatusWarn {
 		t.Fatalf("unexpected finding %#v", finding)
 	}
 	if finding.PackageRef != "pkg:npm/left-pad@1.3.0" {
