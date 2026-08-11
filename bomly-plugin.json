@@ -6,7 +6,7 @@
   "kind": "auditor",
   "runtime": "hashicorp-grpc",
   "pluginApiVersion": "bomly.plugin.v1",
-  "bomlyVersion": ">=0.1.0",
+  "bomlyVersion": ">=0.20.0",
   "entrypoint": {
     "linux/amd64": "bin/bomly-plugin-meme-auditor",
     "darwin/arm64": "bin/bomly-plugin-meme-auditor",
