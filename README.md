@@ -6,7 +6,7 @@ Example Bomly auditor plugin that emits reference-style warning findings for pac
 
 ```bash
 go test ./...
-go build -o bin/bomly-plugin-meme-auditor .
+go build -o bin/bomly-plugin-meme-auditor ./cmd/bomly-plugin-meme-auditor
 ```
 
 ## Install for local development
