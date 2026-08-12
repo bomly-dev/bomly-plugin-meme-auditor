@@ -71,11 +71,13 @@ func (a *Auditor) Applicable(_ context.Context, req sdk.AuditRequest) (bool, err
 
 // Audit emits warn findings for dependencies whose names carry meme lore.
 func (a *Auditor) Audit(_ context.Context, req sdk.AuditRequest) (sdk.AuditResult, error) {
-	if req.Graph == nil {
-		return sdk.AuditResult{AuditorRuns: []string{Name}}, nil
-	}
+	// Refuse to run on invalid configuration before any fast path, so a
+	// nil graph cannot mask a broken config as a silent success.
 	if a.configErr != nil {
 		return sdk.AuditResult{}, fmt.Errorf("invalid meme auditor configuration: %w", a.configErr)
+	}
+	if req.Graph == nil {
+		return sdk.AuditResult{AuditorRuns: []string{Name}}, nil
 	}
 	memePackages := configuredMemePackages(a.config)
 	findings := make([]sdk.Finding, 0)

@@ -110,6 +110,11 @@ func TestInvalidConfigSurfacesThroughReady(t *testing.T) {
 	if _, err := auditor.Audit(context.Background(), sdk.AuditRequest{Graph: sdk.New()}); err == nil {
 		t.Fatal("expected Audit to refuse to run with an invalid configuration")
 	}
+	// The nil-graph fast path must not mask a broken configuration as a
+	// silent success.
+	if _, err := auditor.Audit(context.Background(), sdk.AuditRequest{}); err == nil {
+		t.Fatal("expected Audit with a nil graph to refuse to run with an invalid configuration")
+	}
 }
 
 // Findings travel to the host as JSON of sdk.Finding. Hosts older than
