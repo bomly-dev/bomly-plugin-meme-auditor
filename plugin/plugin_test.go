@@ -41,17 +41,29 @@ func newAuditor(t *testing.T, config json.RawMessage) sdk.Auditor {
 	return auditor
 }
 
+// newDependencyNode builds an npm dependency node. Node construction can
+// fail now that identity is a minted, validated package URL, so the error is
+// a test failure rather than something a struct literal could not express.
+func newDependencyNode(t *testing.T, name, version, purl string) *sdk.DependencyNode {
+	t.Helper()
+	node, err := sdk.NewDependencyNode(sdk.Coordinates{
+		Name:      name,
+		Version:   version,
+		Ecosystem: sdk.EcosystemNPM,
+		PURL:      purl,
+	})
+	if err != nil {
+		t.Fatalf("NewDependencyNode(%q) error = %v", purl, err)
+	}
+	if node.NodeID() != purl {
+		t.Fatalf("node identity = %q, want the canonical package URL %q", node.NodeID(), purl)
+	}
+	return node
+}
+
 func TestAuditFlagsMemeDependency(t *testing.T) {
 	graph := sdk.New()
-	dep := sdk.NewDependency(sdk.Dependency{
-		Coordinates: sdk.Coordinates{
-			Name:      "left-pad",
-			Version:   "1.3.0",
-			Ecosystem: sdk.EcosystemNPM,
-			PURL:      "pkg:npm/left-pad@1.3.0",
-		},
-	})
-	if err := graph.AddNode(dep); err != nil {
+	if err := graph.AddNode(newDependencyNode(t, "left-pad", "1.3.0", "pkg:npm/left-pad@1.3.0")); err != nil {
 		t.Fatalf("AddNode() error = %v", err)
 	}
 	resp, err := newAuditor(t, nil).Audit(context.Background(), sdk.AuditRequest{Graph: graph})
@@ -78,15 +90,7 @@ func TestAuditFlagsMemeDependency(t *testing.T) {
 
 func TestAuditFlagsConfiguredExtraPackage(t *testing.T) {
 	graph := sdk.New()
-	dep := sdk.NewDependency(sdk.Dependency{
-		Coordinates: sdk.Coordinates{
-			Name:      "hyperfast-ai-agent",
-			Version:   "0.0.1",
-			Ecosystem: sdk.EcosystemNPM,
-			PURL:      "pkg:npm/hyperfast-ai-agent@0.0.1",
-		},
-	})
-	if err := graph.AddNode(dep); err != nil {
+	if err := graph.AddNode(newDependencyNode(t, "hyperfast-ai-agent", "0.0.1", "pkg:npm/hyperfast-ai-agent@0.0.1")); err != nil {
 		t.Fatalf("AddNode() error = %v", err)
 	}
 	auditor := newAuditor(t, json.RawMessage(`{"extra_packages":["Hyperfast-AI-Agent"]}`))
@@ -96,6 +100,34 @@ func TestAuditFlagsConfiguredExtraPackage(t *testing.T) {
 	}
 	if len(resp.Findings) != 1 {
 		t.Fatalf("expected one finding for the configured package, got %#v", resp.Findings)
+	}
+}
+
+// The auditor audits consumed packages, not the scanned project's own
+// artifacts. Before the SDK's typed node union both were sdk.Dependency
+// values in one graph and this auditor looked at all of them, so a project
+// whose own module happened to carry a meme name was flagged as if it were a
+// dependency. Ownership is the node kind now, and this pins the narrowing:
+// a module node with a meme name produces no finding.
+func TestAuditIgnoresProjectOwnedModules(t *testing.T) {
+	graph := sdk.New()
+	module, err := sdk.NewModuleNode("package.json", sdk.Coordinates{
+		Name:      "left-pad",
+		Version:   "1.3.0",
+		Ecosystem: sdk.EcosystemNPM,
+	})
+	if err != nil {
+		t.Fatalf("NewModuleNode() error = %v", err)
+	}
+	if err := graph.AddNode(module); err != nil {
+		t.Fatalf("AddNode() error = %v", err)
+	}
+	resp, err := newAuditor(t, nil).Audit(context.Background(), sdk.AuditRequest{Graph: graph})
+	if err != nil {
+		t.Fatalf("Audit() error = %v", err)
+	}
+	if len(resp.Findings) != 0 {
+		t.Fatalf("project-owned module must not be audited, got %#v", resp.Findings)
 	}
 }
 
@@ -124,14 +156,7 @@ func TestInvalidConfigSurfacesThroughReady(t *testing.T) {
 // the plugin relies on: policy_status carries warn on the way out, and the SDK
 // still accepts legacy disposition payloads on the way in.
 func TestFindingPolicyStatusWireCompat(t *testing.T) {
-	dep := sdk.NewDependency(sdk.Dependency{
-		Coordinates: sdk.Coordinates{
-			Name:      "left-pad",
-			Version:   "1.3.0",
-			Ecosystem: sdk.EcosystemNPM,
-			PURL:      "pkg:npm/left-pad@1.3.0",
-		},
-	})
+	dep := newDependencyNode(t, "left-pad", "1.3.0", "pkg:npm/left-pad@1.3.0")
 	data, err := json.Marshal(finding(dep, "test reason"))
 	if err != nil {
 		t.Fatalf("marshal finding: %v", err)
