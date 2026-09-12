@@ -6,6 +6,7 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -112,9 +113,7 @@ func (a *Auditor) Audit(_ context.Context, req sdk.AuditRequest) (sdk.AuditResul
 
 func configuredMemePackages(cfg config) map[string]string {
 	out := make(map[string]string, len(defaultMemePackages)+len(cfg.ExtraPackages))
-	for name, reason := range defaultMemePackages {
-		out[name] = reason
-	}
+	maps.Copy(out, defaultMemePackages)
 	for _, name := range cfg.ExtraPackages {
 		name = strings.ToLower(strings.TrimSpace(name))
 		if name != "" {
