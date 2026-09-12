@@ -81,9 +81,15 @@ func (a *Auditor) Audit(_ context.Context, req sdk.AuditRequest) (sdk.AuditResul
 	}
 	memePackages := configuredMemePackages(a.config)
 	findings := make([]sdk.Finding, 0)
-	nodes := req.Graph.Nodes()
+	// Dependency nodes only. Before the SDK's typed node union every graph
+	// node was an sdk.Dependency, including the scanned project's own root
+	// and workspace members, so this loop audited them too. Ownership is now
+	// the node kind, and this auditor is about consumed packages: the
+	// findings it emits carry a PackageRef, which a module or manifest node
+	// has no business supplying.
+	nodes := req.Graph.DependencyNodes()
 	if req.Target != nil {
-		nodes = []*sdk.Dependency{req.Target}
+		nodes = []*sdk.DependencyNode{req.Target}
 	}
 	for _, dep := range nodes {
 		if dep == nil {
@@ -118,10 +124,14 @@ func configuredMemePackages(cfg config) map[string]string {
 	return out
 }
 
-func finding(dep *sdk.Dependency, reason string) sdk.Finding {
+func finding(dep *sdk.DependencyNode, reason string) sdk.Finding {
+	// A dependency node's identity is its canonical package URL, and
+	// PackageRef is derived from it by the constructor, so the two agree by
+	// construction. The fallback is kept because PackageRef is a plain wire
+	// field a producer can leave empty.
 	purl := dep.PackageRef
 	if purl == "" {
-		purl = sdk.CanonicalPackageURLFromDependency(dep)
+		purl = sdk.NodePURL(dep)
 	}
 	reasons := []string{"meme-dependency", reason}
 	sort.Strings(reasons)
@@ -134,7 +144,7 @@ func finding(dep *sdk.Dependency, reason string) sdk.Finding {
 		Auditor:        Name,
 		PolicyStatus:   sdk.FindingPolicyStatusWarn,
 		PackageRef:     purl,
-		DependencyRefs: []string{dep.ID},
+		DependencyRefs: []string{dep.NodeID()},
 		Reasons:        reasons,
 	}
 }
