@@ -8,9 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	sdk "github.com/bomly-dev/bomly-sdk"
 	"github.com/bomly-dev/bomly-sdk/conformance"
 	"go.uber.org/zap"
+
+	"github.com/bomly-dev/bomly-sdk/httpkit"
+	"github.com/bomly-dev/bomly-sdk/model"
+	sdkplugin "github.com/bomly-dev/bomly-sdk/plugin"
 )
 
 // testHost is a minimal HostContext for unit tests.
@@ -19,9 +22,9 @@ type testHost struct {
 }
 
 func (h testHost) Logger() *zap.Logger                 { return zap.NewNop() }
-func (h testHost) HTTPClient() *sdk.HTTPClientProvider { return nil }
-func (h testHost) Runtime() sdk.RuntimeInfo {
-	return sdk.RuntimeInfo{Execution: sdk.ExecutionEmbedded}
+func (h testHost) HTTPClient() *httpkit.ClientProvider { return nil }
+func (h testHost) Runtime() sdkplugin.RuntimeInfo {
+	return sdkplugin.RuntimeInfo{Execution: sdkplugin.ExecutionEmbedded}
 }
 
 func (h testHost) DecodeConfig(v any) error {
@@ -32,7 +35,7 @@ func (h testHost) DecodeConfig(v any) error {
 	return json.Unmarshal(payload, v)
 }
 
-func newAuditor(t *testing.T, config json.RawMessage) sdk.Auditor {
+func newAuditor(t *testing.T, config json.RawMessage) sdkplugin.Auditor {
 	t.Helper()
 	auditor, err := Module().Auditor.New(context.Background(), testHost{config: config})
 	if err != nil {
@@ -44,12 +47,12 @@ func newAuditor(t *testing.T, config json.RawMessage) sdk.Auditor {
 // newDependencyNode builds an npm dependency node. Node construction can
 // fail now that identity is a minted, validated package URL, so the error is
 // a test failure rather than something a struct literal could not express.
-func newDependencyNode(t *testing.T, name, version, purl string) *sdk.DependencyNode {
+func newDependencyNode(t *testing.T, name, version, purl string) *model.DependencyNode {
 	t.Helper()
-	node, err := sdk.NewDependencyNode(sdk.Coordinates{
+	node, err := model.NewDependencyNode(model.Coordinates{
 		Name:      name,
 		Version:   version,
-		Ecosystem: sdk.EcosystemNPM,
+		Ecosystem: model.EcosystemNPM,
 		PURL:      purl,
 	})
 	if err != nil {
@@ -62,11 +65,11 @@ func newDependencyNode(t *testing.T, name, version, purl string) *sdk.Dependency
 }
 
 func TestAuditFlagsMemeDependency(t *testing.T) {
-	graph := sdk.New()
+	graph := model.New()
 	if err := graph.AddNode(newDependencyNode(t, "left-pad", "1.3.0", "pkg:npm/left-pad@1.3.0")); err != nil {
 		t.Fatalf("AddNode() error = %v", err)
 	}
-	resp, err := newAuditor(t, nil).Audit(context.Background(), sdk.AuditRequest{Graph: graph})
+	resp, err := newAuditor(t, nil).Audit(context.Background(), sdkplugin.AuditRequest{Graph: graph})
 	if err != nil {
 		t.Fatalf("Audit() error = %v", err)
 	}
@@ -74,7 +77,7 @@ func TestAuditFlagsMemeDependency(t *testing.T) {
 		t.Fatalf("expected one finding, got %#v", resp.Findings)
 	}
 	finding := resp.Findings[0]
-	if finding.Kind != sdk.FindingKindPackage || finding.PolicyStatus != sdk.FindingPolicyStatusWarn {
+	if finding.Kind != model.FindingKindPackage || finding.PolicyStatus != model.FindingPolicyStatusWarn {
 		t.Fatalf("unexpected finding %#v", finding)
 	}
 	if finding.PackageRef != "pkg:npm/left-pad@1.3.0" {
@@ -89,12 +92,12 @@ func TestAuditFlagsMemeDependency(t *testing.T) {
 }
 
 func TestAuditFlagsConfiguredExtraPackage(t *testing.T) {
-	graph := sdk.New()
+	graph := model.New()
 	if err := graph.AddNode(newDependencyNode(t, "hyperfast-ai-agent", "0.0.1", "pkg:npm/hyperfast-ai-agent@0.0.1")); err != nil {
 		t.Fatalf("AddNode() error = %v", err)
 	}
 	auditor := newAuditor(t, json.RawMessage(`{"extra_packages":["Hyperfast-AI-Agent"]}`))
-	resp, err := auditor.Audit(context.Background(), sdk.AuditRequest{Graph: graph})
+	resp, err := auditor.Audit(context.Background(), sdkplugin.AuditRequest{Graph: graph})
 	if err != nil {
 		t.Fatalf("Audit() error = %v", err)
 	}
@@ -110,11 +113,11 @@ func TestAuditFlagsConfiguredExtraPackage(t *testing.T) {
 // dependency. Ownership is the node kind now, and this pins the narrowing:
 // a module node with a meme name produces no finding.
 func TestAuditIgnoresProjectOwnedModules(t *testing.T) {
-	graph := sdk.New()
-	module, err := sdk.NewModuleNode("package.json", sdk.Coordinates{
+	graph := model.New()
+	module, err := model.NewModuleNode("package.json", model.Coordinates{
 		Name:      "left-pad",
 		Version:   "1.3.0",
-		Ecosystem: sdk.EcosystemNPM,
+		Ecosystem: model.EcosystemNPM,
 	})
 	if err != nil {
 		t.Fatalf("NewModuleNode() error = %v", err)
@@ -122,7 +125,7 @@ func TestAuditIgnoresProjectOwnedModules(t *testing.T) {
 	if err := graph.AddNode(module); err != nil {
 		t.Fatalf("AddNode() error = %v", err)
 	}
-	resp, err := newAuditor(t, nil).Audit(context.Background(), sdk.AuditRequest{Graph: graph})
+	resp, err := newAuditor(t, nil).Audit(context.Background(), sdkplugin.AuditRequest{Graph: graph})
 	if err != nil {
 		t.Fatalf("Audit() error = %v", err)
 	}
@@ -136,15 +139,15 @@ func TestAuditIgnoresProjectOwnedModules(t *testing.T) {
 // it (the ReadyResponse.Reason contract from the legacy serving style).
 func TestInvalidConfigSurfacesThroughReady(t *testing.T) {
 	auditor := newAuditor(t, json.RawMessage(`{"extra_packages":"not-a-list"}`))
-	if err := auditor.Ready(context.Background(), sdk.AuditRequest{}); err == nil {
+	if err := auditor.Ready(context.Background(), sdkplugin.AuditRequest{}); err == nil {
 		t.Fatal("expected Ready to report the invalid configuration")
 	}
-	if _, err := auditor.Audit(context.Background(), sdk.AuditRequest{Graph: sdk.New()}); err == nil {
+	if _, err := auditor.Audit(context.Background(), sdkplugin.AuditRequest{Graph: model.New()}); err == nil {
 		t.Fatal("expected Audit to refuse to run with an invalid configuration")
 	}
 	// The nil-graph fast path must not mask a broken configuration as a
 	// silent success.
-	if _, err := auditor.Audit(context.Background(), sdk.AuditRequest{}); err == nil {
+	if _, err := auditor.Audit(context.Background(), sdkplugin.AuditRequest{}); err == nil {
 		t.Fatal("expected Audit with a nil graph to refuse to run with an invalid configuration")
 	}
 }
@@ -165,19 +168,19 @@ func TestFindingPolicyStatusWireCompat(t *testing.T) {
 		t.Fatalf("serialized finding must carry policy_status warn, got %s", data)
 	}
 
-	var roundTrip sdk.Finding
+	var roundTrip model.Finding
 	if err := json.Unmarshal(data, &roundTrip); err != nil {
 		t.Fatalf("unmarshal finding: %v", err)
 	}
-	if roundTrip.PolicyStatus != sdk.FindingPolicyStatusWarn {
+	if roundTrip.PolicyStatus != model.FindingPolicyStatusWarn {
 		t.Fatalf("round-tripped policy status = %q, want warn", roundTrip.PolicyStatus)
 	}
 
-	var legacy sdk.Finding
+	var legacy model.Finding
 	if err := json.Unmarshal([]byte(`{"id":"finding","disposition":"warn"}`), &legacy); err != nil {
 		t.Fatalf("unmarshal legacy finding: %v", err)
 	}
-	if legacy.PolicyStatus != sdk.FindingPolicyStatusWarn {
+	if legacy.PolicyStatus != model.FindingPolicyStatusWarn {
 		t.Fatalf("legacy disposition mapped to %q, want warn", legacy.PolicyStatus)
 	}
 }
