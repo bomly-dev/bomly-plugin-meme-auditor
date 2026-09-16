@@ -10,8 +10,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/bomly-dev/bomly-sdk"
 	"github.com/google/uuid"
+
+	"github.com/bomly-dev/bomly-sdk/model"
+	sdkplugin "github.com/bomly-dev/bomly-sdk/plugin"
 )
 
 // Name is the plugin's identity. It MUST equal the "id" field in
@@ -43,22 +45,22 @@ var defaultMemePackages = map[string]string{
 }
 
 // descriptor is the auditor's static registration data.
-func descriptor() sdk.AuditorDescriptor {
-	return sdk.AuditorDescriptor{
+func descriptor() sdkplugin.AuditorDescriptor {
+	return sdkplugin.AuditorDescriptor{
 		Name:         Name,
 		DisplayName:  "Meme Dependency Auditor",
 		Aliases:      []string{"meme-auditor", "meme"},
 		Tags:         []string{"policy", "dependency-lore"},
-		ConfigSchema: sdk.MustConfigSchemaFor(config{}),
+		ConfigSchema: sdkplugin.MustConfigSchemaFor(config{}),
 	}
 }
 
 // Descriptor identifies the auditor to Bomly.
-func (a *Auditor) Descriptor() sdk.AuditorDescriptor { return descriptor() }
+func (a *Auditor) Descriptor() sdkplugin.AuditorDescriptor { return descriptor() }
 
 // Ready reports whether the auditor can run; an invalid configuration is
 // reported as the not-ready reason rather than a construction failure.
-func (a *Auditor) Ready(context.Context, sdk.AuditRequest) error {
+func (a *Auditor) Ready(context.Context, sdkplugin.AuditRequest) error {
 	if a.configErr != nil {
 		return fmt.Errorf("invalid meme auditor configuration: %w", a.configErr)
 	}
@@ -66,22 +68,22 @@ func (a *Auditor) Ready(context.Context, sdk.AuditRequest) error {
 }
 
 // Applicable reports whether the request carries a dependency graph to audit.
-func (a *Auditor) Applicable(_ context.Context, req sdk.AuditRequest) (bool, error) {
+func (a *Auditor) Applicable(_ context.Context, req sdkplugin.AuditRequest) (bool, error) {
 	return req.Graph != nil, nil
 }
 
 // Audit emits warn findings for dependencies whose names carry meme lore.
-func (a *Auditor) Audit(_ context.Context, req sdk.AuditRequest) (sdk.AuditResult, error) {
+func (a *Auditor) Audit(_ context.Context, req sdkplugin.AuditRequest) (sdkplugin.AuditResult, error) {
 	// Refuse to run on invalid configuration before any fast path, so a
 	// nil graph cannot mask a broken config as a silent success.
 	if a.configErr != nil {
-		return sdk.AuditResult{}, fmt.Errorf("invalid meme auditor configuration: %w", a.configErr)
+		return sdkplugin.AuditResult{}, fmt.Errorf("invalid meme auditor configuration: %w", a.configErr)
 	}
 	if req.Graph == nil {
-		return sdk.AuditResult{AuditorRuns: []string{Name}}, nil
+		return sdkplugin.AuditResult{AuditorRuns: []string{Name}}, nil
 	}
 	memePackages := configuredMemePackages(a.config)
-	findings := make([]sdk.Finding, 0)
+	findings := make([]model.Finding, 0)
 	// Dependency nodes only. Before the SDK's typed node union every graph
 	// node was an sdk.Dependency, including the scanned project's own root
 	// and workspace members, so this loop audited them too. Ownership is now
@@ -90,7 +92,7 @@ func (a *Auditor) Audit(_ context.Context, req sdk.AuditRequest) (sdk.AuditResul
 	// has no business supplying.
 	nodes := req.Graph.DependencyNodes()
 	if req.Target != nil {
-		nodes = []*sdk.DependencyNode{req.Target}
+		nodes = []*model.DependencyNode{req.Target}
 	}
 	for _, dep := range nodes {
 		if dep == nil {
@@ -104,7 +106,7 @@ func (a *Auditor) Audit(_ context.Context, req sdk.AuditRequest) (sdk.AuditResul
 		}
 		findings = append(findings, finding(dep, reason))
 	}
-	return sdk.AuditResult{
+	return sdkplugin.AuditResult{
 		Findings:        findings,
 		AuditorRuns:     []string{Name},
 		AuditorFindings: map[string]int{Name: len(findings)},
@@ -123,25 +125,25 @@ func configuredMemePackages(cfg config) map[string]string {
 	return out
 }
 
-func finding(dep *sdk.DependencyNode, reason string) sdk.Finding {
+func finding(dep *model.DependencyNode, reason string) model.Finding {
 	// A dependency node's identity is its canonical package URL, and
 	// PackageRef is derived from it by the constructor, so the two agree by
 	// construction. The fallback is kept because PackageRef is a plain wire
 	// field a producer can leave empty.
 	purl := dep.PackageRef
 	if purl == "" {
-		purl = sdk.NodePURL(dep)
+		purl = model.NodePURL(dep)
 	}
 	reasons := []string{"meme-dependency", reason}
 	sort.Strings(reasons)
-	return sdk.Finding{
+	return model.Finding{
 		ID:             newFindingID(),
-		Kind:           sdk.FindingKindPackage,
+		Kind:           model.FindingKindPackage,
 		Title:          "Dependency has unusually high meme density",
-		Severity:       sdk.SeverityLow,
+		Severity:       model.SeverityLow,
 		Source:         Name,
 		Auditor:        Name,
-		PolicyStatus:   sdk.FindingPolicyStatusWarn,
+		PolicyStatus:   model.FindingPolicyStatusWarn,
 		PackageRef:     purl,
 		DependencyRefs: []string{dep.NodeID()},
 		Reasons:        reasons,
@@ -159,12 +161,12 @@ func newFindingID() string {
 // Module packages the auditor for both execution modes: Bomly can embed it
 // in-process or serve it as a managed plugin subprocess (see
 // cmd/bomly-plugin-meme-auditor).
-func Module() sdk.Module {
-	return sdk.Module{
-		Kind: sdk.PluginKindAuditor,
-		Auditor: &sdk.AuditorModule{
+func Module() sdkplugin.Module {
+	return sdkplugin.Module{
+		Kind: sdkplugin.PluginKindAuditor,
+		Auditor: &sdkplugin.AuditorModule{
 			Descriptor: descriptor(),
-			New: func(_ context.Context, host sdk.HostContext) (sdk.Auditor, error) {
+			New: func(_ context.Context, host sdkplugin.HostContext) (sdkplugin.Auditor, error) {
 				auditor := &Auditor{}
 				auditor.configErr = host.DecodeConfig(&auditor.config)
 				return auditor, nil
