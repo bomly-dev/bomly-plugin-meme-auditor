@@ -4,7 +4,7 @@ Example Bomly auditor plugin that emits reference-style warning findings for pac
 
 ## Access
 
-`bomly-plugin.json` declares an empty `access` block: the auditor reads only the dependency graph Bomly sends it, so it touches no files, makes no network calls, reads no environment variables and starts no processes. It is a disclosure, not a sandbox. The auditor declares that it needs a dependency graph, so Bomly can explain why it did not run on a scan that produced none.
+`bomly-plugin.json` declares an empty `access` block: the auditor reads only the dependency graph Bomly sends it and its own `extra_packages` configuration, so it touches no files, makes no network calls, reads no environment variables and starts no processes. It is a disclosure, not a sandbox. An empty graph simply yields no findings, so the auditor declares no requirements.
 
 ## Build and test
 
