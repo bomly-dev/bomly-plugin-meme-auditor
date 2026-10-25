@@ -52,6 +52,8 @@ func descriptor() sdkplugin.AuditorDescriptor {
 		Aliases:      []string{"meme-auditor", "meme"},
 		Tags:         []string{"policy", "dependency-lore"},
 		ConfigSchema: sdkplugin.MustConfigSchemaFor(config{}),
+		// No Requires: an empty graph simply yields no findings, and a
+		// declared dependency graph would only add a warning to that scan.
 	}
 }
 

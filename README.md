@@ -2,6 +2,10 @@
 
 Example Bomly auditor plugin that emits reference-style warning findings for packages with meme-ish names such as `left-pad`, `is-odd`, and `colors`. It is intentionally a little silly: useful for learning the auditor API, not a serious security policy.
 
+## Access
+
+`bomly-plugin.json` declares an empty `access` block: the auditor reads only the dependency graph Bomly sends it and its own `extra_packages` configuration, so it touches no files, makes no network calls, reads no environment variables and starts no processes. It is a disclosure, not a sandbox. An empty graph simply yields no findings, so the auditor declares no requirements.
+
 ## Build and test
 
 ```bash

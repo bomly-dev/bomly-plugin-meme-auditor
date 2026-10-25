@@ -15,5 +15,6 @@
   "source": "github:bomly-dev/bomly-plugin-meme-auditor@v0.1.12",
   "homepage": "https://github.com/bomly-dev/bomly-plugin-meme-auditor",
   "license": "Apache-2.0",
-  "description": "Example auditor plugin that emits warning findings for meme dependency names."
+  "description": "Example auditor plugin that emits warning findings for meme dependency names.",
+  "access": {}
 }
